@@ -108,7 +108,12 @@ class Factory
         $spec = $this->validateSpecification($spec, __METHOD__);
         $type = isset($spec['type']) ? $spec['type'] : Element::class;
 
-        $element = $this->getFormElementManager()->get($type);
+        if (isset($spec['options'])) {
+            $element = $this->getFormElementManager()->get($type, $spec['options']);
+            unset($spec['options']);
+        } else {
+            $element = $this->getFormElementManager()->get($type);
+        }
 
         if ($element instanceof FormInterface) {
             return $this->configureForm($element, $spec);

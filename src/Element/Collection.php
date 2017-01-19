@@ -312,14 +312,7 @@ class Collection extends Fieldset
      */
     public function setTargetElement($elementOrFieldset)
     {
-        if (is_array($elementOrFieldset)
-            || ($elementOrFieldset instanceof Traversable && !$elementOrFieldset instanceof ElementInterface)
-        ) {
-            $factory = $this->getFormFactory();
-            $elementOrFieldset = $factory->create($elementOrFieldset);
-        }
-
-        if (!$elementOrFieldset instanceof ElementInterface) {
+        if (!(is_array($elementOrFieldset) || $elementOrFieldset instanceof Traversable || $elementOrFieldset instanceof ElementInterface)) {
             throw new Exception\InvalidArgumentException(sprintf(
                 '%s requires that $elementOrFieldset be an object implementing %s; received "%s"',
                 __METHOD__,
@@ -327,7 +320,6 @@ class Collection extends Fieldset
                 (is_object($elementOrFieldset) ? get_class($elementOrFieldset) : gettype($elementOrFieldset))
             ));
         }
-
         $this->targetElement = $elementOrFieldset;
 
         return $this;
@@ -340,6 +332,13 @@ class Collection extends Fieldset
      */
     public function getTargetElement()
     {
+        if (!$this->targetElement) {
+            return null;
+        }
+        if (!$this->targetElement instanceof ElementInterface) {
+            $factory = $this->getFormFactory();
+            $this->targetElement = $factory->create($this->targetElement);
+        }
         return $this->targetElement;
     }
 
@@ -523,11 +522,11 @@ class Collection extends Fieldset
 
             // If the target element is a fieldset that can accept the provided value
             // we should clone it, inject the value and extract the data
-            if ($this->targetElement instanceof FieldsetInterface) {
-                if (! $this->targetElement->allowObjectBinding($value)) {
+            if ($this->getTargetElement() instanceof FieldsetInterface) {
+                if (! $this->getTargetElement()->allowObjectBinding($value)) {
                     continue;
                 }
-                $targetElement = clone $this->targetElement;
+                $targetElement = clone $this->getTargetElement();
                 $targetElement->setObject($value);
                 $values[$key] = $targetElement->extract();
                 if (!$this->createNewObjects() && $this->has($key)) {
@@ -537,7 +536,7 @@ class Collection extends Fieldset
             }
 
             // If the target element is a non-fieldset element, just use the value
-            if ($this->targetElement instanceof ElementInterface) {
+            if ($this->getTargetElement() instanceof ElementInterface) {
                 $values[$key] = $value;
                 if (!$this->createNewObjects() && $this->has($key)) {
                     $this->get($key)->setValue($value);
@@ -556,7 +555,7 @@ class Collection extends Fieldset
      */
     protected function createNewTargetElementInstance()
     {
-        return clone $this->targetElement;
+        return clone $this->getTargetElement();
     }
 
     /**

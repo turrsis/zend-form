@@ -778,4 +778,17 @@ class FactoryTest extends TestCase
         $this->assertInstanceOf(TestAsset\FieldsetWithDependency::class, $targetElement);
         $this->assertInstanceOf(TestAsset\InputFilter::class, $targetElement->getDependency());
     }
+
+    public function testCreateAndPassOptionsToConstructor()
+    {
+        $this->factory->getFormElementManager()->setInvokableClass('testMutable', 'ZendTest\Form\TestAsset\ConstructedElement');
+        $element = $this->factory->create(array(
+            'type' => 'testMutable',
+            'options' => array(
+                'constructedKey' => 'constructedKey'
+            ),
+        ));
+        $this->assertEquals('constructedKey', $element->getOption('constructedKey'));
+        $this->assertEquals('constructedKey', $element->constructedKey);
+    }
 }
